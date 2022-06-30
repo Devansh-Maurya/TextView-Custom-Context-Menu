@@ -4,13 +4,12 @@ import android.annotation.SuppressLint
 import android.graphics.Color
 import android.graphics.PointF
 import android.os.Bundle
-import android.text.style.BackgroundColorSpan
 import android.view.MotionEvent
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.text.set
-import androidx.core.text.toSpannable
+import androidx.core.text.backgroundColor
+import androidx.core.text.buildSpannedString
 import maurya.devansh.defining.databinding.ActivityMainBinding
 
 
@@ -46,15 +45,28 @@ class MainActivity : AppCompatActivity() {
             wildcardPairs.add(pair)
         }
 
-        val spannable = text.toSpannable()
+        buildSpannedString {
+            var plainTextStart = 0
 
-        wildcardPairs.forEach {
-            val word = text.substring(it.first + 1, it.second)
-            val (startOffset, endOffset) = it
+            // Remove stars as formatted text is built
+            wildcardPairs.forEach {
+                val (wildcardStart, wildcardEnd) = it //start and end for word
 
-            spannable[startOffset+1..endOffset] = BackgroundColorSpan(Color.YELLOW)
-        }
-        binding.textView.text = spannable
+                val plainText = text.substring(plainTextStart until wildcardStart)
+                if (plainText.isNotEmpty()) {
+                    append(plainText)
+                }
+                plainTextStart = wildcardEnd + 1
+
+                backgroundColor(Color.YELLOW) {
+                    append(text.substring(wildcardStart + 1, wildcardEnd))
+                }
+            }
+            val plainText = text.substring(plainTextStart)
+            if (plainText.isNotEmpty()) {
+                append(plainText)
+            }
+        }.also { binding.textView.text = it }
 
         binding.textView.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
