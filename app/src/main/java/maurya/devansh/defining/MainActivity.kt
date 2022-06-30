@@ -1,12 +1,18 @@
 package maurya.devansh.defining
 
+import android.annotation.SuppressLint
 import android.graphics.PointF
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.text.SpannableString
+import android.text.TextPaint
+import android.text.style.ClickableSpan
 import android.view.MotionEvent
+import android.view.View
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import maurya.devansh.defining.databinding.ActivityMainBinding
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -15,13 +21,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
+    private val wildcardPairs = arrayListOf<Pair<Int, Int>>()
 
+    private val spanWildcard = "*"
+    private val text = "”Space,” it says, “is big. Really big. You just won’t believe how *vastly*, hugely, *mindbogglingly* big it is. I mean, you may think it’s a long way down the road to the chemist’s, but that’s just peanuts to space.”"
+
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        val spanWildcard = "*"
-        val text = "”Space,” it says, “is big. Really big. You just won’t believe how *vastly*, hugely, *mindbogglingly* big it is. I mean, you may think it’s a long way down the road to the chemist’s, but that’s just peanuts to space.”"
+        binding.textView.text = text
 
         val wildcardIndices = arrayListOf<Int>()
         var index = text.indexOf(spanWildcard)
@@ -30,18 +40,56 @@ class MainActivity : AppCompatActivity() {
             index = text.indexOf(spanWildcard, index + 1)
         }
 
-        val wildcardPairs = arrayListOf<Pair<Int, Int>>()
-
+        wildcardPairs.clear()
         for (i in 0 until wildcardIndices.size step 2) {
             val pair = Pair(wildcardIndices[i], wildcardIndices[i + 1])
             wildcardPairs.add(pair)
         }
 
-        Log.d(TAG, "wildcardPairs: $wildcardPairs")
+        val spannable = SpannableString(text)
+
+        wildcardPairs.forEach {
+            val word = text.substring(it.first + 1, it.second)
+            val (startOffset, endOffset) = it
+
+            val clickableSpan = object : ClickableSpan() {
+                override fun onClick(view: View) {
+                }
+
+                override fun updateDrawState(ds: TextPaint) {
+
+                }
+            }
+        }
+
+        binding.textView.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                val touchPoint = event?.getTouchPoint() ?: PointF(-1f, -1f)
+                val offsetForPosition =
+                    binding.textView.getOffsetForPosition(touchPoint.x, touchPoint.y)
+                val textOffsetForTouch: Int = binding.textView.layout.run {
+                    val line: Int = getLineForVertical(touchPoint.y.toInt())
+                    val offset: Int = getOffsetForHorizontal(line, touchPoint.x)
+                    offset
+                }
+                //Both offsetForPosition and textOffsetForTouch are giving the same value,
+                //although answers at StackOverflow recommend the later approach citing that there
+                //are some bugs in using the former method. Will have to test.
+
+                wildcardPairs.forEach { (start, end) ->
+                    val word = text.substring(start + 1, end)
+                    if (textOffsetForTouch in start..end) {
+                        toast("Touching on word: $word")
+                    }
+                }
+            }
+            true
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        binding.tvExactLocation.setTouchLocationText("Exact", event?.getTouchPoint())
+        val touchPoint = event?.getTouchPoint() ?: PointF(-1f, -1f)
+        binding.tvExactLocation.setTouchLocationText("Exact", touchPoint)
         return super.onTouchEvent(event)
     }
 
@@ -49,5 +97,9 @@ class MainActivity : AppCompatActivity() {
         text = "$title location\n(${point?.x}, ${point?.y})"
     }
 
-    private fun MotionEvent.getTouchPoint(): PointF = PointF(rawX, rawY)
+    private fun MotionEvent.getTouchPoint(): PointF = PointF(x, y)
+
+    private fun toast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
 }
