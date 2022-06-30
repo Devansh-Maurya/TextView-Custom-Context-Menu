@@ -1,16 +1,16 @@
 package maurya.devansh.defining
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.graphics.PointF
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.TextPaint
-import android.text.style.ClickableSpan
+import android.text.style.BackgroundColorSpan
 import android.view.MotionEvent
-import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.text.set
+import androidx.core.text.toSpannable
 import maurya.devansh.defining.databinding.ActivityMainBinding
 
 
@@ -46,21 +46,15 @@ class MainActivity : AppCompatActivity() {
             wildcardPairs.add(pair)
         }
 
-        val spannable = SpannableString(text)
+        val spannable = text.toSpannable()
 
         wildcardPairs.forEach {
             val word = text.substring(it.first + 1, it.second)
             val (startOffset, endOffset) = it
 
-            val clickableSpan = object : ClickableSpan() {
-                override fun onClick(view: View) {
-                }
-
-                override fun updateDrawState(ds: TextPaint) {
-
-                }
-            }
+            spannable[startOffset+1..endOffset] = BackgroundColorSpan(Color.YELLOW)
         }
+        binding.textView.text = spannable
 
         binding.textView.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
