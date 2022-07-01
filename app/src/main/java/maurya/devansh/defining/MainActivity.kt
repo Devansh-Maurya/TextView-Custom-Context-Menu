@@ -86,6 +86,7 @@ class MainActivity : AppCompatActivity() {
                     val word = text.substring(start + 1, end)
                     if (textOffsetForTouch in start..end) {
                         toast("Touching on word: $word")
+                        return@setOnTouchListener true
                     }
                 }
 
