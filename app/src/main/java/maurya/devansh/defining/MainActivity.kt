@@ -3,13 +3,17 @@ package maurya.devansh.defining
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.graphics.PointF
+import android.graphics.Rect
 import android.os.Bundle
 import android.view.MotionEvent
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.text.backgroundColor
 import androidx.core.text.buildSpannedString
+import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import maurya.devansh.defining.databinding.ActivityMainBinding
 
 
@@ -23,7 +27,13 @@ class MainActivity : AppCompatActivity() {
     private val wildcardPairs = arrayListOf<Pair<Int, Int>>()
 
     private val spanWildcard = "*"
-    private val text = "”Space,” it says, “is big. Really big. You just won’t believe how *vastly*, hugely, *mindbogglingly* big it is. I mean, you may think it’s a long way down the road to the chemist’s, but that’s just peanuts to space.”"
+    private val text = "”Space,” it says, “is big. Really big. You just won’t believe how *vastly*, hugely, *mindbogglingly* big it is. I mean, you may think it’s a long way down the road to the chemist’s, but that’s just *peanuts* to space.”"
+
+    private val dictionary = mapOf(
+        "vastly" to "To a very great extent; immensely.",
+        "mindbogglingly" to "In a mindboggling manner; in such a way as to boggle the mind; so as to be beyond comprehension or understanding",
+        "peanuts" to "the oval seed of a tropical South American plant, often roasted and salted and eaten as a snack or used to make oil or animal feed."
+    )
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +80,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.textView.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
-                val touchPoint = event?.getTouchPoint() ?: PointF(-1f, -1f)
+                val touchPoint = event.getTouchPoint()
                 val offsetForPosition =
                     binding.textView.getOffsetForPosition(touchPoint.x, touchPoint.y)
                 val textOffsetForTouch: Int = binding.textView.layout.run {
@@ -86,6 +96,7 @@ class MainActivity : AppCompatActivity() {
                     val word = text.substring(start + 1, end)
                     if (textOffsetForTouch in start..end) {
                         toast("Touching on word: $word")
+                        showDefinitionUi(word, event.getRawTouchPoint())
                         return@setOnTouchListener true
                     }
                 }
@@ -109,7 +120,30 @@ class MainActivity : AppCompatActivity() {
 
     private fun MotionEvent.getTouchPoint(): PointF = PointF(x, y)
 
+    private fun MotionEvent.getRawTouchPoint(): PointF = PointF(rawX, rawY)
+
+
     private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showDefinitionUi(word: String, touchPoint: PointF) {
+        val definition = dictionary[word] ?: "No definition found for $word"
+        binding.tvWord.text = word
+        binding.tvDefinition.text = definition
+
+        val viewRect = Rect()
+        binding.containerDefinitionCard.getGlobalVisibleRect(viewRect)
+
+        val guidelinePercent = (touchPoint.y - viewRect.top) / viewRect.height()
+        val cardHorizontalBias = (touchPoint.x - viewRect.left) / viewRect.width()
+
+        binding.guidelineCard.setGuidelinePercent(guidelinePercent)
+
+        binding.cardViewDefinition.updateLayoutParams<ConstraintLayout.LayoutParams> {
+            horizontalBias = cardHorizontalBias
+        }
+
+        binding.cardViewDefinition.isVisible = true
     }
 }
