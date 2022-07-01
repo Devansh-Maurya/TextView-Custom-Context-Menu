@@ -88,6 +88,9 @@ class MainActivity : AppCompatActivity() {
                         toast("Touching on word: $word")
                     }
                 }
+
+                binding.tvExactLocation.setTouchLocationText("Exact", PointF(event.rawX, event.rawY))
+                binding.tvCalculatedLocation.setTouchLocationText("Relative", touchPoint)
             }
             true
         }
