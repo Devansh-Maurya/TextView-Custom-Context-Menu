@@ -5,13 +5,17 @@ import android.graphics.Color
 import android.graphics.PointF
 import android.graphics.Rect
 import android.os.Bundle
+import android.text.TextPaint
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
 import android.view.MotionEvent
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.text.backgroundColor
 import androidx.core.text.buildSpannedString
+import androidx.core.text.inSpans
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import maurya.devansh.defining.databinding.ActivityMainBinding
@@ -40,7 +44,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        binding.textView.text = text
 
         val wildcardIndices = arrayListOf<Int>()
         var index = text.indexOf(spanWildcard)
@@ -55,12 +58,14 @@ class MainActivity : AppCompatActivity() {
             wildcardPairs.add(pair)
         }
 
+        var textViewLastTouchPoint = PointF(-1f, -1f)
+
         buildSpannedString {
             var plainTextStart = 0
 
             // Remove stars as formatted text is built
             wildcardPairs.forEach {
-                val (wildcardStart, wildcardEnd) = it //start and end for word
+                val (wildcardStart, wildcardEnd) = it
 
                 val plainText = text.substring(plainTextStart until wildcardStart)
                 if (plainText.isNotEmpty()) {
@@ -68,43 +73,42 @@ class MainActivity : AppCompatActivity() {
                 }
                 plainTextStart = wildcardEnd + 1
 
-                backgroundColor(Color.YELLOW) {
-                    append(text.substring(wildcardStart + 1, wildcardEnd))
+                val word = text.substring(wildcardStart + 1, wildcardEnd)
+
+                val clickSpan = object : ClickableSpan() {
+                    override fun onClick(widget: View) {
+                        //Subtract textSize to prevent popup overlapping with word
+                        textViewLastTouchPoint.y -= binding.textView.textSize
+
+                        showDefinitionUi(word, textViewLastTouchPoint)
+                    }
+
+                    override fun updateDrawState(ds: TextPaint) {
+                        ds.bgColor = Color.YELLOW
+                    }
+                }
+
+                inSpans(clickSpan) {
+                    append(word)
                 }
             }
             val plainText = text.substring(plainTextStart)
             if (plainText.isNotEmpty()) {
                 append(plainText)
             }
-        }.also { binding.textView.text = it }
+        }.also {
+            binding.textView.text = it
+        }
+        binding.textView.movementMethod = LinkMovementMethod.getInstance()
 
         binding.textView.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
-                val touchPoint = event.getTouchPoint()
-                val offsetForPosition =
-                    binding.textView.getOffsetForPosition(touchPoint.x, touchPoint.y)
-                val textOffsetForTouch: Int = binding.textView.layout.run {
-                    val line: Int = getLineForVertical(touchPoint.y.toInt())
-                    val offset: Int = getOffsetForHorizontal(line, touchPoint.x)
-                    offset
-                }
-                //Both offsetForPosition and textOffsetForTouch are giving the same value,
-                //although answers at StackOverflow recommend the later approach citing that there
-                //are some bugs in using the former method. Will have to test.
+                textViewLastTouchPoint = event.getRawTouchPoint()
 
-                wildcardPairs.forEach { (start, end) ->
-                    val word = text.substring(start + 1, end)
-                    if (textOffsetForTouch in start..end) {
-                        toast("Touching on word: $word")
-                        showDefinitionUi(word, event.getRawTouchPoint())
-                        return@setOnTouchListener true
-                    }
-                }
-
-                binding.tvExactLocation.setTouchLocationText("Exact", PointF(event.rawX, event.rawY))
-                binding.tvCalculatedLocation.setTouchLocationText("Relative", touchPoint)
+                binding.tvExactLocation.setTouchLocationText("Exact", event.getRawTouchPoint())
+                binding.tvCalculatedLocation.setTouchLocationText("Relative", event.getTouchPoint())
             }
-            true
+            false
         }
     }
 
