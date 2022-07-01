@@ -19,6 +19,7 @@ import androidx.core.text.inSpans
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import maurya.devansh.defining.databinding.ActivityMainBinding
+import kotlin.math.roundToInt
 
 
 class MainActivity : AppCompatActivity() {
@@ -146,8 +147,13 @@ class MainActivity : AppCompatActivity() {
 
         binding.cardViewDefinition.updateLayoutParams<ConstraintLayout.LayoutParams> {
             horizontalBias = cardHorizontalBias
+            matchConstraintMaxWidth = (viewRect.width() * .85).roundToInt()
         }
 
         binding.cardViewDefinition.isVisible = true
+
+        binding.ivClose.setOnClickListener {
+            binding.cardViewDefinition.isVisible = false
+        }
     }
 }
