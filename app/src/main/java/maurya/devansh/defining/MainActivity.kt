@@ -156,9 +156,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.cardViewDefinition.isVisible = true
+        binding.containerDefinitionCard.isClickable = true
+
+        val hideDefinitionCard = {
+            binding.cardViewDefinition.isVisible = false
+            binding.containerDefinitionCard.isClickable = false
+        }
+
+        binding.cardViewDefinition.setOnClickListener {
+            //Intercept touch event to prevent hiding the card
+        }
 
         binding.ivClose.setOnClickListener {
-            binding.cardViewDefinition.isVisible = false
+            hideDefinitionCard()
+        }
+
+        binding.containerDefinitionCard.setOnClickListener {
+            hideDefinitionCard()
         }
     }
 }
