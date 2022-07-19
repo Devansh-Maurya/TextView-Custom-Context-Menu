@@ -6,7 +6,6 @@ import android.graphics.PointF
 import android.graphics.Rect
 import android.os.Bundle
 import android.text.TextPaint
-import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.view.MotionEvent
 import android.view.View
@@ -19,6 +18,7 @@ import androidx.core.text.inSpans
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import maurya.devansh.defining.databinding.ActivityMainBinding
+import me.saket.bettermovementmethod.BetterLinkMovementMethod
 import kotlin.math.roundToInt
 
 
@@ -78,10 +78,7 @@ class MainActivity : AppCompatActivity() {
 
                 val clickSpan = object : ClickableSpan() {
                     override fun onClick(widget: View) {
-                        //Subtract textSize to prevent popup overlapping with word
-                        textViewLastTouchPoint.y -= binding.textView.textSize
-
-                        showDefinitionUi(word, textViewLastTouchPoint)
+                        // Using long click via link movement method
                     }
 
                     override fun updateDrawState(ds: TextPaint) {
@@ -100,7 +97,14 @@ class MainActivity : AppCompatActivity() {
         }.also {
             binding.textView.text = it
         }
-        binding.textView.movementMethod = LinkMovementMethod.getInstance()
+        binding.textView.movementMethod = BetterLinkMovementMethod.newInstance().apply {
+            setOnLinkLongClickListener { textView, word ->
+                //Subtract textSize to prevent popup overlapping with word
+                textViewLastTouchPoint.y -= binding.textView.textSize
+                showDefinitionUi(word, textViewLastTouchPoint)
+                true
+            }
+        }
 
         binding.textView.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
