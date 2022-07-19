@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     override fun updateDrawState(ds: TextPaint) {
-                        ds.bgColor = Color.YELLOW
+                        ds.bgColor = 0x33FFFF00
                     }
                 }
 
@@ -105,6 +105,7 @@ class MainActivity : AppCompatActivity() {
                 true
             }
         }
+        binding.textView.highlightColor = Color.YELLOW
 
         binding.textView.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
